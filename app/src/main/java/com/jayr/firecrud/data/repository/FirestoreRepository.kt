@@ -6,6 +6,7 @@ import com.google.firebase.firestore.Query
 import com.jayr.firecrud.data.models.Task
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.channels.awaitClose
 
 class FirestoreRepository(
     private val firestore: FirebaseFirestore
