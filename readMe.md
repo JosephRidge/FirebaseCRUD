@@ -25,13 +25,13 @@ data class Task(
 )
 ```
 ### Interface to be added inside the repository directory
-- The interface is like a contract that state that you must implement the following methods, in this case it is to perform CRUD operations
+- The interface is like a contract that states, you must implement the following methods, in this case it is to perform CRUD operations
 ``` Kotlin
 interface TaskService {
-    fun observeTasks(userId: String): Flow<List<Task>>
-    suspend fun getTask(taskId: String): Task?
-    suspend fun addTask(task: Task, imageBytesList: List<ByteArray>): Result<Task>
-    suspend fun updateTask(task: Task, newImageBytesList: List<ByteArray>): Result<Task>
-    suspend fun deleteTask(taskId: String): Result<Unit>
+    fun observeTasks(userId: String): Flow<List<Task>>   // Read (continuous)
+    suspend fun getTask(taskId: String): Task?            // Read (one-shot)
+    suspend fun addTask(task:Task): Task                // Create
+    suspend fun updateTask(task:Task)             // Update
+    suspend fun deleteTask(taskId: String)   // Delete
 }
 ```
