@@ -9,12 +9,9 @@ Use this [repository](https://github.com/JosephRidge/MVVMSafari) to help.
 ##  User Flow Diagram
 ![img_2.png](img_2.png)
 
-# Data Section 
+# **Data Layer**
 ## Data Section file structure
-![img_4.png](img_4.png)
-
-## File Structure for Data:
-![img_3.png](img_3.png)
+![img_6.png](img_6.png)
 
 ## Task Model:
 ``` kotlin
@@ -140,3 +137,110 @@ class FirestoreRepository(
 }
 ```
 
+# **UI Layer**
+## File Structure
+## UI
+
+Task form to upload tasks + images
+``` Kotlin
+
+@Composable
+fun TaskForm(
+    existingTask: Task? = null,
+    taskFormViewModel: TaskFormViewModel = viewModel()
+) {
+//   states
+    val titleState = rememberTextFieldState("")
+    val descriptionState = rememberTextFieldState("")
+    /*
+    * Kindly note: 
+        For 'by' in:
+           var localImagePaths by remember { mutableStateOf<List<String>>(emptyList()) }    val pickImagesLauncher = rememberLauncherForActivityResult(
+             contract = ActivityResultContracts.PickMultipleVisualMedia()
+            ) { uris ->
+                localImagePaths = uris.map { it.toString() }
+            }
+     you need to import:
+        import androidx.compose.runtime.getValue
+        import androidx.compose.runtime.setValue
+     */
+    var localImagePaths by remember { mutableStateOf<List<String>>(emptyList()) }
+    val pickImagesLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickMultipleVisualMedia()
+    ) { uris ->
+        localImagePaths = uris.map { it.toString() }
+    }
+
+    Column(modifier = Modifier.padding(16.dp)) {
+        OutlinedTextField(
+            state = titleState,
+            label = { Text("Title") }
+        )
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(
+            state = descriptionState,
+            label = { Text("Description") }
+        )
+        Spacer(Modifier.height(8.dp))
+        Button(onClick = {
+            pickImagesLauncher.launch(
+                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+            )
+        }) { Text("Add Images") }
+        Spacer(Modifier.height(8.dp))
+        Button(onClick = {
+            val task = (existingTask ?: Task()).copy(
+                title = titleState.text.toString(),
+                description = descriptionState.text.toString()
+            )
+            taskFormViewModel.createTask(task, localImagePaths)
+        }) { Text("Save Task") }
+    }
+}
+```
+## View Models
+
+TaskViewModel
+```Kotlin
+
+class TaskFormViewModel(
+    private val firestoreRepository: FirestoreRepository
+): ViewModel() {
+
+//     states
+    private var _uiState: MutableStateFlow<TaskUIState> = MutableStateFlow(TaskUIState.isIdle)
+    val uiState = _uiState.asStateFlow()
+    private var _responseMessage: MutableStateFlow<String> = MutableStateFlow("")
+    val responseMessage = _responseMessage.asStateFlow()
+
+ 
+//    methods (just functions in classes)
+fun createTask(task: Task, localImagePaths: List<String>) {
+    viewModelScope.launch {
+        _uiState.value = TaskUIState.isLoading
+        try {
+            firestoreRepository.addTask(task, localImagePaths)
+            _uiState.value = TaskUIState.isSuccess
+            _responseMessage.value = "Task created successfully."
+        } catch (e: Exception) {
+            _uiState.value = TaskUIState.isError
+            _responseMessage.value = e.message.toString()
+        }
+    }
+}
+
+    fun updateTask(task: Task, localImagePaths: List<String>) {
+        viewModelScope.launch {
+            _uiState.value = TaskUIState.isLoading
+            try {
+                firestoreRepository.updateTask(task, localImagePaths)
+                _uiState.value = TaskUIState.isSuccess
+                _responseMessage.value = "Task updated successfully."
+            } catch (e: Exception) {
+                _uiState.value = TaskUIState.isError
+                _responseMessage.value = e.message.toString()
+            }
+        }
+    }
+}
+```
