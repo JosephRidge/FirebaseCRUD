@@ -10,3 +10,6 @@ object About
 
 @Serializable
 object Login
+
+@Serializable
+object TaskForm

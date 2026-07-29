@@ -12,6 +12,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,7 +25,7 @@ import com.jayr.firecrud.data.models.Task
 
 @Composable
 fun TaskForm(
-    existingTask: Task? = null,
+    taskId: String? = null,
     taskFormViewModel: TaskFormViewModel = viewModel()
 ) {
 //   states
@@ -46,6 +48,13 @@ fun TaskForm(
         contract = ActivityResultContracts.PickMultipleVisualMedia()
     ) { uris ->
         localImagePaths = uris.map { it.toString() }
+    }
+    val existingTask by taskFormViewModel.existingTask.collectAsState()
+
+    LaunchedEffect(taskId) {
+        if (taskId != null) {
+            taskFormViewModel.loadTask(taskId)
+        }
     }
 
     Column(modifier = Modifier.padding(16.dp)) {

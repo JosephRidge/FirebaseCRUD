@@ -7,6 +7,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.Navigation
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.jayr.firecrud.ui.screens.home.HomeScreen
 
 @Composable
 fun Navigation(
@@ -18,7 +19,7 @@ fun Navigation(
         navController =  navHostController,
         startDestination = Home
     ){
-        composable<Home>{   }
+        composable<Home>{ HomeScreen() }
         composable<About>{  }
         composable<Login>{ }
     }

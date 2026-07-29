@@ -138,6 +138,63 @@ class FirestoreRepository(
 ```
 
 # **UI Layer**
+My assumption is that you have already set up navigation, hence on the MainActivity remove `Greetings()` composable  together with the `@Preview`, so move from this: 
+```Kotlin
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContent {
+            FireCRUDTheme {
+                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                    Greeting(
+                        name = "Android",
+                        modifier = Modifier.padding(innerPadding)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun Greeting(name: String, modifier: Modifier = Modifier) {
+    Text(
+        text = "Hello $name!",
+        modifier = modifier
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+fun GreetingPreview() {
+    FireCRUDTheme {
+        Greeting("Android")
+    }
+}
+```
+
+to this:
+```Kotlin
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContent {
+            FireCRUDTheme {
+                val navController = rememberNavController()
+                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                    Navigation(
+                        modifier = Modifier.padding(innerPadding),
+                        navHostController = navController
+                    )
+                }
+            }
+        }
+    }
+}
+```
 ## File Structure
 
 

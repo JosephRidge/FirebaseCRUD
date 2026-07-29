@@ -18,10 +18,23 @@ class TaskFormViewModel(
     val uiState = _uiState.asStateFlow()
     private var _responseMessage: MutableStateFlow<String> = MutableStateFlow("")
     val responseMessage = _responseMessage.asStateFlow()
-
+    private var _existingTask: MutableStateFlow<Task?> = MutableStateFlow(null)
+    val existingTask = _existingTask.asStateFlow()
 
 //    methods (just functions in classes)
-fun createTask(task: Task, localImagePaths: List<String>) {
+    fun loadTask(taskId: String) {
+        viewModelScope.launch {
+            _uiState.value = TaskUIState.isLoading
+            try {
+                _existingTask.value = firestoreRepository.getTask(taskId)
+                _uiState.value = TaskUIState.isSuccess
+            } catch (e: Exception) {
+                _uiState.value = TaskUIState.isError
+                _responseMessage.value = e.message.toString()
+            }
+        }
+    }
+    fun createTask(task: Task, localImagePaths: List<String>) {
     viewModelScope.launch {
         _uiState.value = TaskUIState.isLoading
         try {
