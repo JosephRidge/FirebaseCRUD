@@ -1,5 +1,7 @@
 package com.jayr.firecrud.data.repository.firestore
 
+import android.content.Context
+import android.net.Uri
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.jayr.firecrud.data.models.Task
@@ -8,11 +10,12 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import java.io.File
+import java.io.IOException
 
 class FirestoreRepository(
-    private val firestore: FirebaseFirestore,
+    private val firestore: FirebaseFirestore =  FirebaseFirestore.getInstance(),
     private val cloudinaryImageUpload: CloudinaryImageUpload
-
 ) : TaskService {
     private val tasksRef get() = firestore.collection("tasks")
 
@@ -43,17 +46,20 @@ class FirestoreRepository(
         awaitClose { listener.remove() }
     }
 
-    /*
-    * Uploads any local image files first, then attaches the resulting
-    * Cloudinary URLs to imageUrls before writing the task to Firestore.
-    * Uploading before the Firestore write means we never save a task
-    * that references images that failed to upload.
-    */
-    override suspend fun addTask(task: Task, localImagePaths: List<String>): Task {
+
+    override suspend fun addTask(
+        task: Task,
+        localImagePaths: List<String>,
+        readBytes: (String) -> ByteArray
+    ): Task {
+
         val docRef = tasksRef.document()
 
         val uploadedUrls = if (localImagePaths.isNotEmpty()) {
-            cloudinaryImageUpload.uploadImages(localImagePaths)
+            cloudinaryImageUpload.uploadImages(
+                localImagePaths,
+                readBytes
+            )
         } else {
             emptyList()
         }
@@ -62,9 +68,54 @@ class FirestoreRepository(
             id = docRef.id,
             imageUrls = task.imageUrls + uploadedUrls
         )
+
         docRef.set(withId).await()
+
         return withId
     }
+//    override suspend fun addTask(task: Task, localImagePaths: List<String>, ): Task {
+//        val docRef = tasksRef.document()
+//
+//        val uploadedUrls = if (localImagePaths.isNotEmpty()) {
+//
+//            cloudinaryImageUpload.uploadImages(
+//                localImagePaths,
+//                { readBytesFromPath(context) })
+//        } else {
+//            emptyList()
+//        }
+//
+//        val withId = task.copy(
+//            id = docRef.id,
+//            imageUrls = task.imageUrls + uploadedUrls
+//        )
+//        docRef.set(withId).await()
+//        return withId
+//    }
+    // test
+    /*
+    * Uploads any local image files first, then attaches the resulting
+    * Cloudinary URLs to imageUrls before writing the task to Firestore.
+    * Uploading before the Firestore write means we never save a task
+    * that references images that failed to upload.
+    */
+//    override suspend fun addTask(task: Task, localImagePaths: List<String>): Task {
+//        val docRef = tasksRef.document()
+//
+//        val uploadedUrls = if (localImagePaths.isNotEmpty()) {
+//
+//            cloudinaryImageUpload.uploadImages(localImagePaths)
+//        } else {
+//            emptyList()
+//        }
+//
+//        val withId = task.copy(
+//            id = docRef.id,
+//            imageUrls = task.imageUrls + uploadedUrls
+//        )
+//        docRef.set(withId).await()
+//        return withId
+//    }
 
     /*
     * Uploads any new local images and appends their URLs to the task's
@@ -77,18 +128,19 @@ class FirestoreRepository(
     * already has that entry stripped out, and this function will save it
     * as-is via .set().
     */
-    override suspend fun updateTask(task: Task, localImagePaths: List<String>): Task {
+    override suspend fun updateTask(task: Task, localImagePaths: List<String>,  readBytes: (String) -> ByteArray): Task {
         val uploadedUrls = if (localImagePaths.isNotEmpty()) {
-            cloudinaryImageUpload.uploadImages(localImagePaths)
+            cloudinaryImageUpload.uploadImages(
+                localImagePaths,
+                readBytes
+            )
         } else {
             emptyList()
         }
-
         val updatedTask = task.copy(
             imageUrls = task.imageUrls + uploadedUrls,
             updatedAt = System.currentTimeMillis()
         )
-
         tasksRef.document(updatedTask.id).set(updatedTask).await()
         return updatedTask
     }

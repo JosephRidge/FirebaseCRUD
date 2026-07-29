@@ -2,10 +2,10 @@ package com.jayr.firecrud.data.repository.cloudinary
 
 import android.content.Context
 import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
 import com.cloudinary.android.MediaManager
 import com.cloudinary.android.callback.ErrorInfo
 import com.cloudinary.android.callback.UploadCallback
-import com.google.rpc.ErrorInfo
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -24,23 +24,36 @@ import kotlin.coroutines.resumeWithException
  * Source Documentation for reference:https://cloudinary.com/documentation/android_image_and_video_upload
  * Setup: https://cloudinary.com/documentation/android_quickstart
  */
-class CloudinaryImageUpload(private val context: Context) {
+class CloudinaryImageUpload() {
 
-    suspend fun uploadImages(localImagePaths: List<String>): List<String> = coroutineScope {
+    // test
+    suspend fun uploadImages(
+        localImagePaths: List<String>,
+        readBytes: (String) -> ByteArray
+    ): List<String> = coroutineScope {
         localImagePaths.map { path ->
-            async { uploadSingleImage(readBytesFromPath(path)) }
+            async {
+                uploadSingleImage(readBytes(path))
+            }
         }.awaitAll()
     }
+    // test
 
-    private fun readBytesFromPath(path: String): ByteArray {
-        val uri = Uri.parse(path)
-        return if (uri.scheme == "content" || uri.scheme == "file") {
-            context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                ?: throw IOException("Could not open input stream for $path")
-        } else {
-            File(path).readBytes()
-        }
-    }
+//     suspend fun uploadImages(localImagePaths: List<String>): List<String> = coroutineScope {
+//        localImagePaths.map { path ->
+//            async { uploadSingleImage(readBytesFromPath(path)) }
+//        }.awaitAll()
+//    }
+
+//    private fun readBytesFromPath(path: String): ByteArray {
+//        val uri = Uri.parse(path)
+//        return if (uri.scheme == "content" || uri.scheme == "file") {
+//            context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+//                ?: throw IOException("Could not open input stream for $path")
+//        } else {
+//            File(path).readBytes()
+//        }
+//    }
 
     private suspend fun uploadSingleImage(bytes: ByteArray): String =
         suspendCancellableCoroutine { cont ->

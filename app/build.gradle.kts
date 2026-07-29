@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.gms.google.services)
+    kotlin("plugin.serialization") version "2.0.21"
 }
 
 android {
@@ -79,7 +80,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
     // cloudinary
-    implementation(libs.kotlin.url.gen)
     implementation(libs.cloudinary.android)
     implementation(libs.glide)
     implementation(libs.androidx.constraintlayout)

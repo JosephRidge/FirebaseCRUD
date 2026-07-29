@@ -21,7 +21,6 @@ navigationTesting = "2.9.8"
 navigationUi = "2.9.8"
 kotlinxSerializationJson = "1.11.0"
 lifecycleViewmodelCompose = "2.10.0"
-kotlinUrlGen = "1.11.0"
 playServicesCastTv = "21.1.1"
 
 [libraries]
@@ -51,7 +50,6 @@ androidx-navigation-testing = { module = "androidx.navigation:navigation-testing
 androidx-navigation-ui = { module = "androidx.navigation:navigation-ui", version.ref = "navigationUi" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
-kotlin-url-gen = { module = "com.cloudinary:kotlin-url-gen", version.ref = "kotlinUrlGen" }
 play-services-cast-tv = { group = "com.google.android.gms", name = "play-services-cast-tv", version.ref = "playServicesCastTv" }
 
 [plugins]

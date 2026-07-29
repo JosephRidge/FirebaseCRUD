@@ -24,7 +24,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jayr.firecrud.data.models.Task
 
 @Composable
-fun TaskForm(
+fun TaskFormScreen(
     taskId: String? = null,
     taskFormViewModel: TaskFormViewModel = viewModel()
 ) {

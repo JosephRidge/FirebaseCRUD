@@ -15,7 +15,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -23,34 +22,32 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import com.jayr.firecrud.data.models.Task
-import com.jayr.firecrud.ui.screens.uiState.TaskUIState
+import com.jayr.firecrud.ui.navigation.TaskDetail
+import com.jayr.firecrud.ui.screens.uiState.UIState
 
 @Composable
 fun HomeScreen(
-    userId: String,
     homeViewModel: HomeViewModel = viewModel(),
-    onTaskClick: (Task) -> Unit = {}
+    navController : NavHostController
 ) {
     val uiState by homeViewModel.uiState.collectAsState()
     val tasks by homeViewModel.tasks.collectAsState()
     val responseMessage by homeViewModel.responseMessage.collectAsState()
 
-    LaunchedEffect(userId) {
-        homeViewModel.loadTasks(userId)
-    }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text("My Tasks", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(8.dp))
 
         when (uiState) {
-            is TaskUIState.isLoading -> {
+            is UIState.isLoading -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             }
-            is TaskUIState.isError -> {
+            is UIState.isError -> {
                 Text(
                     text = responseMessage,
                     color = MaterialTheme.colorScheme.error
@@ -62,7 +59,11 @@ fun HomeScreen(
                 } else {
                     LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(tasks, key = { it.id }) { task ->
-                            TaskListItem(task = task, onClick = { onTaskClick(task) })
+                            TaskListItem(task = task, onClick = {
+                                navController.navigate(
+                                    TaskDetail(taskId = task.id)
+                            )
+                            })
                         }
                     }
                 }

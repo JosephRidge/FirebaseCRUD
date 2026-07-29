@@ -1,23 +1,21 @@
 package com.jayr.firecrud.ui.screens.home
 
-import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jayr.firecrud.data.models.Task
+import com.jayr.firecrud.data.repository.cloudinary.CloudinaryImageUpload
 import com.jayr.firecrud.data.repository.firestore.FirestoreRepository
-import com.jayr.firecrud.data.repository.firestore.TaskService
-import com.jayr.firecrud.ui.screens.uiState.TaskUIState
+import com.jayr.firecrud.ui.screens.uiState.UIState
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
-    private val firebaseRepository: FirestoreRepository
+    private val firebaseRepository: FirestoreRepository  = FirestoreRepository(
+        CloudinaryImageUpload()
+    )
 ): ViewModel() {
-    private var _uiState: MutableStateFlow<TaskUIState> = MutableStateFlow(TaskUIState.isIdle)
+    private var _uiState: MutableStateFlow<UIState> = MutableStateFlow(UIState.isIdle)
     val uiState = _uiState.asStateFlow()
     private var _tasks: MutableStateFlow<List<Task>> = MutableStateFlow(emptyList())
     val tasks = _tasks.asStateFlow()
@@ -27,14 +25,14 @@ class HomeViewModel(
 //     load tasks
     fun loadTasks(userId: String) {
         viewModelScope.launch {
-            _uiState.value = TaskUIState.isLoading
+            _uiState.value = UIState.isLoading
             try {
                 firebaseRepository.observeTasks(userId).collect { taskList ->
                     _tasks.value = taskList
-                    _uiState.value = TaskUIState.isSuccess
+                    _uiState.value = UIState.isSuccess
                 }
             } catch (e: Exception) {
-                _uiState.value = TaskUIState.isError
+                _uiState.value = UIState.isError
                 _responseMessage.value = e.message.toString()
             }
         }

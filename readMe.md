@@ -1,3 +1,7 @@
+Prerequisite: 
+- Create Firebase project via the frirebase console
+- Create cloudinary account (what this:https://youtu.be/b2RE0f95_vc?si=38N07f6ssTGPKNLx&t=162) 
+- 
 ## MVVM Architecture
 ![img.png](img.png)
 

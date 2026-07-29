@@ -1,6 +1,6 @@
 package com.jayr.firecrud.ui.navigation
-
 import kotlinx.serialization.Serializable
+
 
 @Serializable
 object Home
@@ -12,4 +12,11 @@ object About
 object Login
 
 @Serializable
-object TaskForm
+data class TaskForm(
+    val taskId: String? = null
+)
+
+@Serializable
+data class TaskDetail(
+    val taskId: String
+)

@@ -12,7 +12,7 @@ sealed class AuthUIstate {
     object isSuccess : AuthUIstate()
     object isFailed : AuthUIstate()
 }
-
+/*
 class AuthenticationViewModel(
     private val authRepository: AuthRepository = AuthRepository()
 ) : ViewModel() {
@@ -82,4 +82,4 @@ class AuthenticationViewModel(
     }
 
 
-}
+}*/

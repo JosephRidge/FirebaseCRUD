@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jayr.firecrud.data.models.Task
 import com.jayr.firecrud.data.repository.firestore.FirestoreRepository
-import com.jayr.firecrud.ui.screens.uiState.TaskUIState
+import com.jayr.firecrud.ui.screens.uiState.UIState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -14,7 +14,7 @@ class TaskDetailViewModel(
     ) : ViewModel() {
 
         // UI State
-        private val _uiState = MutableStateFlow<TaskUIState>(TaskUIState.isIdle)
+        private val _uiState = MutableStateFlow<UIState>(UIState.isIdle)
         val uiState = _uiState.asStateFlow()
 
         // Selected Task
@@ -30,21 +30,21 @@ class TaskDetailViewModel(
          */
         fun loadTask(taskId: String) {
             viewModelScope.launch {
-                _uiState.value = TaskUIState.isLoading
+                _uiState.value = UIState.isLoading
 
                 try {
                     val result = firestoreRepository.getTask(taskId)
 
                     if (result != null) {
                         _task.value = result
-                        _uiState.value = TaskUIState.isSuccess
+                        _uiState.value = UIState.isSuccess
                     } else {
-                        _uiState.value = TaskUIState.isError
+                        _uiState.value = UIState.isError
                         _responseMessage.value = "Task not found."
                     }
 
                 } catch (e: Exception) {
-                    _uiState.value = TaskUIState.isError
+                    _uiState.value = UIState.isError
                     _responseMessage.value = e.message ?: "Something went wrong."
                 }
             }

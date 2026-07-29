@@ -21,21 +21,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.jayr.firecrud.data.models.Task
+import com.jayr.firecrud.ui.navigation.TaskForm
 import com.jayr.firecrud.ui.screens.home.HomeViewModel
 @Composable
 fun TaskDetailScreen(
     taskId: String,
     taskDetailViewModel: TaskDetailViewModel = viewModel(),
-    onEditClick: (String) -> Unit,
-    onBack: () -> Unit
+    navController: NavController
 ) {
     val task by taskDetailViewModel.task.collectAsState()
-
     LaunchedEffect(taskId) {
         taskDetailViewModel.loadTask(taskId)
     }
-
     task?.let { t ->
         Column(
             modifier = Modifier
@@ -46,18 +45,14 @@ fun TaskDetailScreen(
                 text = t.title,
                 style = MaterialTheme.typography.headlineSmall
             )
-
             Spacer(Modifier.height(8.dp))
-
             Text(
                 text = t.description,
                 style = MaterialTheme.typography.bodyMedium
             )
-
             Spacer(Modifier.height(16.dp))
-
             Button(
-                onClick = { onEditClick(t.id) }
+                onClick = {    navController.navigate("taskForm/${task!!.id}")}
             ) {
                 Text("Edit Task")
             }
