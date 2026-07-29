@@ -139,11 +139,87 @@ class FirestoreRepository(
 
 # **UI Layer**
 ## File Structure
+
+
 ## UI
+Kindly note for the homescreen and tasklist item they are currently located in the `HomeScreen.kt` file however, it is best practice to separate them, but first objective make sure it works.
+HomeScreen
+```Kotlin
+
+@Composable
+fun HomeScreen(
+    userId: String,
+    homeViewModel: HomeViewModel = viewModel(),
+    onTaskClick: (Task) -> Unit = {}
+) {
+    val uiState by homeViewModel.uiState.collectAsState()
+    val tasks by homeViewModel.tasks.collectAsState()
+    val responseMessage by homeViewModel.responseMessage.collectAsState()
+
+    LaunchedEffect(userId) {
+        homeViewModel.loadTasks(userId)
+    }
+
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Text("My Tasks", style = MaterialTheme.typography.headlineSmall)
+        Spacer(Modifier.height(8.dp))
+
+        when (uiState) {
+            is TaskUIState.isLoading -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+            is TaskUIState.isError -> {
+                Text(
+                    text = responseMessage,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+            else -> {
+                if (tasks.isEmpty()) {
+                    Text("No tasks yet. Tap + to add one.")
+                } else {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(tasks, key = { it.id }) { task ->
+                            TaskListItem(task = task, onClick = { onTaskClick(task) })
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+
+TaskItemCard Component 
+```Kotlin
+
+//component for each task
+@Composable
+fun TaskListItem(task: Task, onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(task.title, style = MaterialTheme.typography.titleMedium)
+            if (task.description.isNotBlank()) {
+                Text(
+                    task.description,
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+    }
+}
+```
 
 Task form to upload tasks + images
-``` Kotlin
-
+```Kotlin
 @Composable
 fun TaskForm(
     existingTask: Task? = null,
@@ -243,4 +319,36 @@ fun createTask(task: Task, localImagePaths: List<String>) {
         }
     }
 }
+```
+
+HomeViewModel
+```Kotlin
+
+class HomeViewModel(
+    private val firebaseRepository: FirestoreRepository
+): ViewModel() {
+    private var _uiState: MutableStateFlow<TaskUIState> = MutableStateFlow(TaskUIState.isIdle)
+    val uiState = _uiState.asStateFlow()
+    private var _tasks: MutableStateFlow<List<Task>> = MutableStateFlow(emptyList())
+    val tasks = _tasks.asStateFlow()
+    private var _responseMessage: MutableStateFlow<String> = MutableStateFlow("")
+    val responseMessage = _responseMessage.asStateFlow()
+
+//     load tasks
+    fun loadTasks(userId: String) {
+        viewModelScope.launch {
+            _uiState.value = TaskUIState.isLoading
+            try {
+                firebaseRepository.observeTasks(userId).collect { taskList ->
+                    _tasks.value = taskList
+                    _uiState.value = TaskUIState.isSuccess
+                }
+            } catch (e: Exception) {
+                _uiState.value = TaskUIState.isError
+                _responseMessage.value = e.message.toString()
+            }
+        }
+    }
+}
+
 ```
