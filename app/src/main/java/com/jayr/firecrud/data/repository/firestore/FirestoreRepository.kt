@@ -1,6 +1,5 @@
 package com.jayr.firecrud.data.repository.firestore
 
-import android.system.Os
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.jayr.firecrud.data.models.Task
@@ -14,8 +13,9 @@ class FirestoreRepository(
     private val firestore: FirebaseFirestore,
     private val cloudinaryImageUpload: CloudinaryImageUpload
 
-): TaskService {
+) : TaskService {
     private val tasksRef get() = firestore.collection("tasks")
+
     /*
     * Note:
     * Flow<List<Task>>: think of a Flow as a stream of data over time, rather than a single value returned once. Every time the underlying data changes, a new list gets pushed out through the stream.
@@ -36,47 +36,74 @@ class FirestoreRepository(
                     close(error)
                     return@addSnapshotListener
                 }
-                val tasks = snapshot?.documents?.mapNotNull { it.toObject(Task::class.java) } ?: emptyList()
+                val tasks =
+                    snapshot?.documents?.mapNotNull { it.toObject(Task::class.java) } ?: emptyList()
                 trySend(tasks)
             }
         awaitClose { listener.remove() }
     }
 
     /*
-    * suspend fun: this is a one-time operation. Unlike observeTasks, it doesn't keep listening; it fetches the data once and hands it back.
-    * tasksRef.document(taskId): points to one specific document in Firestore, identified by its ID.
-    * .get(): asks Firestore for that document's current data, just once.
-    * .await(): Firestore's .get() normally returns a Task (the Google/Firebase kind, a Task object representing "work in progress" — confusingly the same name as your app's Task model, just from a different library). .await() is a Kotlin coroutines extension that pauses here until that work finishes, then gives you the real result.
-    * .toObject(Task::class.java): converts the raw Firestore document into your app's Task data class.
-    * Return type Task?: nullable, because the document might not exist (wrong ID, already deleted), in which case this returns null.
-    * */
-    override suspend fun getTask(taskId: String): Task? {
-        return tasksRef.document(taskId).get().await().toObject(Task::class.java)
-    }
-
-    /*
-    * tasksRef.document(): with no ID passed in, Firestore auto-generates a new, unique document reference (and unique ID) for you.
-    * task.copy(id = docRef.id): takes the incoming task and makes a copy with that generated ID attached, so the ID stored inside the document matches the ID Firestore uses to locate the document. This is important — it means later on you can just look at a Task object and know its own ID, without needing to separately track "which document did this come from?"
-    * docRef.set(withId): writes the full task data to that new document.
-    * .await(): waits for the write to finish before moving on.
-    * Returns withId: gives the caller back the complete task, now including its assigned ID, so the UI can use it immediately (e.g., to navigate to a detail screen).
-    *  */
-    override suspend fun addTask(task: Task): Task {
+    * Uploads any local image files first, then attaches the resulting
+    * Cloudinary URLs to imageUrls before writing the task to Firestore.
+    * Uploading before the Firestore write means we never save a task
+    * that references images that failed to upload.
+    */
+    override suspend fun addTask(task: Task, localImagePaths: List<String>): Task {
         val docRef = tasksRef.document()
-        val withId = task.copy(id = docRef.id)
-        docRef.set(withId).await()
-        return withId    }
 
-    /*
-    *.set(task): overwrites that document with the new data.
-    * .set() replaces the entire document. If task is missing some field, that field gets wiped out.
-    * If you only want to change one or two fields (like just isCompleted), the safer option is:
-    * tasksRef.document(task.id).update(mapOf("isCompleted" to task.isCompleted)).await()
-    * */
-    override suspend fun updateTask(task: Task) {
-          tasksRef.document(task.id).set(task).await()
+        val uploadedUrls = if (localImagePaths.isNotEmpty()) {
+            cloudinaryImageUpload.uploadImages(localImagePaths)
+        } else {
+            emptyList()
+        }
+
+        val withId = task.copy(
+            id = docRef.id,
+            imageUrls = task.imageUrls + uploadedUrls
+        )
+        docRef.set(withId).await()
+        return withId
     }
 
+    /*
+    * Uploads any new local images and appends their URLs to the task's
+    * existing imageUrls, then overwrites the document. Also refreshes
+    * updatedAt since this represents a modification.
+    *
+    * Note: this only adds images — it doesn't handle removing individual
+    * images from imageUrls. That's a UI-level concern: if your edit screen
+    * lets users remove an image, just pass in a Task whose imageUrls list
+    * already has that entry stripped out, and this function will save it
+    * as-is via .set().
+    */
+    override suspend fun updateTask(task: Task, localImagePaths: List<String>): Task {
+        val uploadedUrls = if (localImagePaths.isNotEmpty()) {
+            cloudinaryImageUpload.uploadImages(localImagePaths)
+        } else {
+            emptyList()
+        }
+
+        val updatedTask = task.copy(
+            imageUrls = task.imageUrls + uploadedUrls,
+            updatedAt = System.currentTimeMillis()
+        )
+
+        tasksRef.document(updatedTask.id).set(updatedTask).await()
+        return updatedTask
+    }
+
+    override suspend fun getTask(taskId: String): Task? =
+        tasksRef.document(taskId).get().await().toObject(Task::class.java)
+
+    /*
+    * Deletes the Firestore document only. The images referenced in
+    * imageUrls are left behind on Cloudinary — deleting them requires
+    * your api_secret via a signed backend/Admin API call, which can't
+    * safely run on-device. A production app would send task.imageUrls
+    * to a backend endpoint here to trigger cleanup.
+    */
     override suspend fun deleteTask(taskId: String) {
-        tasksRef.document(taskId).delete().await()    }
+        tasksRef.document(taskId).delete().await()
+    }
 }

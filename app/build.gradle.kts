@@ -49,6 +49,7 @@ dependencies {
     implementation(libs.firebase.auth)
 //    firestore
     implementation(libs.firebase.firestore)
+    implementation(libs.play.services.cast.tv)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
@@ -79,4 +80,7 @@ dependencies {
 
     // cloudinary
     implementation(libs.kotlin.url.gen)
+    implementation(libs.cloudinary.android)
+    implementation(libs.glide)
+    implementation(libs.androidx.constraintlayout)
 }
