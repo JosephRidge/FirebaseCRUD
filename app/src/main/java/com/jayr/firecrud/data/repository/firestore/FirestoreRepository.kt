@@ -1,52 +1,19 @@
-## MVVM Architecture
-![img.png](img.png)
+package com.jayr.firecrud.data.repository.firestore
 
-Use this [repository](https://github.com/JosephRidge/MVVMSafari) to help.
-
-## Application Architecture 
-![img_1.png](img_1.png)
-
-##  User Flow Diagram
-![img_2.png](img_2.png)
-
-# Data Section 
-## Data Section file structure
-![img_4.png](img_4.png)
-
-## File Structure for Data:
-![img_3.png](img_3.png)
-
-## Task Model:
-``` kotlin
-data class Task(
-    val id: String = "",
-    val userId: String = "",
-    val title: String = "",
-    val description: String = "",
-    val imageUrls: List<String> = emptyList(),
-    val isCompleted: Boolean = false,
-    val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis(),
-    val dueDate: Long? = null
-)
-```
-## Interface to be added inside the repository directory
-- The interface is like a contract that states, you must implement the following methods, in this case it is to perform CRUD operations
-``` Kotlin
-interface TaskService {
-    fun observeTasks(userId: String): Flow<List<Task>>   // Read (continuous)
-    suspend fun getTask(taskId: String): Task?            // Read (one-shot)
-    suspend fun addTask(task:Task): Task                // Create
-    suspend fun updateTask(task:Task)             // Update
-    suspend fun deleteTask(taskId: String)   // Delete
-}
-```
-
-## FirestoreRepository
-```Kotlin
+import android.system.Os
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
+import com.jayr.firecrud.data.models.Task
+import com.jayr.firecrud.data.repository.cloudinary.CloudinaryImageUpload
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.tasks.await
 
 class FirestoreRepository(
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val cloudinaryImageUpload: CloudinaryImageUpload
+
 ): TaskService {
     private val tasksRef get() = firestore.collection("tasks")
     /*
@@ -113,5 +80,3 @@ class FirestoreRepository(
     override suspend fun deleteTask(taskId: String) {
         tasksRef.document(taskId).delete().await()    }
 }
-```
-
