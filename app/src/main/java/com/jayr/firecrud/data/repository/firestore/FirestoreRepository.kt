@@ -46,11 +46,10 @@ class FirestoreRepository(
         awaitClose { listener.remove() }
     }
 
-
     override suspend fun addTask(
         task: Task,
         localImagePaths: List<String>,
-        readBytes: (String) -> ByteArray
+        readBytes: (String?, context: Context?) -> ByteArray
     ): Task {
 
         val docRef = tasksRef.document()

@@ -29,7 +29,7 @@ class CloudinaryImageUpload() {
     // test
     suspend fun uploadImages(
         localImagePaths: List<String>,
-        readBytes: (String) -> ByteArray
+        readBytes: (String?) -> ByteArray
     ): List<String> = coroutineScope {
         localImagePaths.map { path ->
             async {
